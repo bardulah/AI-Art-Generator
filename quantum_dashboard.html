@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Computing Intelligence Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: #e0e6ed;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .dashboard-header {
+            text-align: center;
+            padding: 30px 0;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .dashboard-header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .dashboard-header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .last-updated {
+            text-align: center;
+            font-size: 0.9em;
+            color: #a0aec0;
+            margin-bottom: 20px;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(26, 32, 58, 0.9);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .card-title {
+            font-size: 1.4em;
+            margin-bottom: 20px;
+            color: #667eea;
+            border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+            padding-bottom: 10px;
+        }
+
+        .health-gauge-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        .gauge {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            margin: 15px;
+        }
+
+        .gauge canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .gauge-label {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        .gauge-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2em;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .risk-indicator {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .risk-low {
+            background: rgba(72, 187, 120, 0.3);
+            color: #48bb78;
+            border: 1px solid #48bb78;
+        }
+
+        .risk-moderate {
+            background: rgba(237, 137, 54, 0.3);
+            color: #ed8936;
+            border: 1px solid #ed8936;
+        }
+
+        .risk-high {
+            background: rgba(245, 101, 101, 0.3);
+            color: #f56565;
+            border: 1px solid #f56565;
+        }
+
+        .alerts-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .alert-item {
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            border-left: 4px solid;
+            background: rgba(255, 255, 255, 0.05);
+            transition: background 0.2s ease;
+        }
+
+        .alert-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .alert-critical {
+            border-color: #f56565;
+            background: rgba(245, 101, 101, 0.1);
+        }
+
+        .alert-warning {
+            border-color: #ed8936;
+            background: rgba(237, 137, 54, 0.1);
+        }
+
+        .alert-positive {
+            border-color: #48bb78;
+            background: rgba(72, 187, 120, 0.1);
+        }
+
+        .alert-icon {
+            font-size: 1.3em;
+            margin-right: 10px;
+        }
+
+        .alert-date {
+            font-size: 0.85em;
+            color: #a0aec0;
+            margin-bottom: 5px;
+        }
+
+        .metrics-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .metrics-table th,
+        .metrics-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .metrics-table th {
+            background: rgba(102, 126, 234, 0.2);
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .metrics-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .trend-up {
+            color: #48bb78;
+        }
+
+        .trend-down {
+            color: #f56565;
+        }
+
+        .trend-neutral {
+            color: #a0aec0;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .kpi-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .kpi-label {
+            font-size: 0.9em;
+            color: #a0aec0;
+            margin-bottom: 8px;
+        }
+
+        .kpi-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .kpi-change {
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .company-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .tab-button {
+            padding: 12px 30px;
+            border: 2px solid #667eea;
+            background: rgba(102, 126, 234, 0.2);
+            color: #fff;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button:hover {
+            background: rgba(102, 126, 234, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .tab-button.active {
+            background: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.5);
+        }
+
+        .comparison-heatmap {
+            display: grid;
+            grid-template-columns: 200px repeat(3, 1fr);
+            gap: 2px;
+            margin-top: 20px;
+            font-size: 0.95em;
+        }
+
+        .heatmap-cell {
+            padding: 15px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+        }
+
+        .heatmap-header {
+            background: rgba(102, 126, 234, 0.3);
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .heatmap-label {
+            text-align: left;
+            font-weight: 600;
+            background: rgba(102, 126, 234, 0.2);
+        }
+
+        .heatmap-value {
+            font-weight: bold;
+        }
+
+        .score-high {
+            background: rgba(72, 187, 120, 0.4) !important;
+        }
+
+        .score-medium {
+            background: rgba(237, 137, 54, 0.4) !important;
+        }
+
+        .score-low {
+            background: rgba(245, 101, 101, 0.4) !important;
+        }
+
+        .refresh-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1em;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.5);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .refresh-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.7);
+        }
+
+        .refresh-button:active {
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 768px) {
+            .grid-container {
+                grid-template-columns: 1fr;
+            }
+
+            .company-tabs {
+                flex-direction: column;
+            }
+
+            .comparison-heatmap {
+                font-size: 0.8em;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .loading {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-header">
+        <h1>🔮 Quantum Computing Intelligence Dashboard</h1>
+        <p>Real-Time Multi-Company Monitoring & Analysis</p>
+    </div>
+
+    <div class="last-updated" id="lastUpdated">
+        Last Updated: <span id="updateTime"></span> | Auto-refresh: 15 minutes
+    </div>
+
+    <div class="company-tabs">
+        <button class="tab-button active" onclick="showAllCompanies()">All Companies</button>
+        <button class="tab-button" onclick="filterCompany('ionq')">IonQ</button>
+        <button class="tab-button" onclick="filterCompany('rigetti')">Rigetti</button>
+        <button class="tab-button" onclick="filterCompany('dwave')">D-Wave</button>
+    </div>
+
+    <!-- Overall Health Gauges -->
+    <div class="card" style="grid-column: 1 / -1;">
+        <h2 class="card-title">📊 Overall Company Health Scores</h2>
+        <div style="display: flex; justify-content: space-around; flex-wrap: wrap;">
+            <div class="health-gauge-container">
+                <div class="gauge">
+                    <canvas id="gaugeIonq"></canvas>
+                    <div class="gauge-value">82</div>
+                </div>
+                <div class="gauge-label">IonQ</div>
+                <span class="risk-indicator risk-low">🟢 LOW RISK</span>
+            </div>
+            <div class="health-gauge-container">
+                <div class="gauge">
+                    <canvas id="gaugeRigetti"></canvas>
+                    <div class="gauge-value">53</div>
+                </div>
+                <div class="gauge-label">Rigetti</div>
+                <span class="risk-indicator risk-high">🔴 HIGH RISK</span>
+            </div>
+            <div class="health-gauge-container">
+                <div class="gauge">
+                    <canvas id="gaugeDwave"></canvas>
+                    <div class="gauge-value">68</div>
+                </div>
+                <div class="gauge-label">D-Wave</div>
+                <span class="risk-indicator risk-moderate">🟡 MODERATE</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid-container">
+        <!-- Financial Metrics -->
+        <div class="card">
+            <h2 class="card-title">💰 Financial Performance (Q4 2024)</h2>
+            <div class="chart-container">
+                <canvas id="revenueChart"></canvas>
+            </div>
+            <div class="kpi-grid">
+                <div class="kpi-item">
+                    <div class="kpi-label">IonQ Revenue</div>
+                    <div class="kpi-value">$12.4M</div>
+                    <div class="kpi-change trend-up">↗ +102% YoY</div>
+                </div>
+                <div class="kpi-item">
+                    <div class="kpi-label">Rigetti Revenue</div>
+                    <div class="kpi-value">$2.3M</div>
+                    <div class="kpi-change trend-up">↗ +45% YoY</div>
+                </div>
+                <div class="kpi-item">
+                    <div class="kpi-label">D-Wave Revenue</div>
+                    <div class="kpi-value">$1.9M</div>
+                    <div class="kpi-change trend-down">↘ -15% YoY</div>
+                </div>
+                <div class="kpi-item">
+                    <div class="kpi-label">Sector Average</div>
+                    <div class="kpi-value">$5.5M</div>
+                    <div class="kpi-change trend-neutral">→ +44% YoY</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technology Benchmarks -->
+        <div class="card">
+            <h2 class="card-title">⚛️ Technology Benchmarks</h2>
+            <table class="metrics-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>IonQ</th>
+                        <th>Rigetti</th>
+                        <th>D-Wave</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Gate Fidelity</td>
+                        <td class="trend-up">99.99% ⭐</td>
+                        <td>99.5%</td>
+                        <td class="trend-neutral">N/A</td>
+                    </tr>
+                    <tr>
+                        <td>Algorithmic Qubits</td>
+                        <td>36 AQ</td>
+                        <td>~40 AQ</td>
+                        <td>5,640 (anneal)</td>
+                    </tr>
+                    <tr>
+                        <td>Coherence Time</td>
+                        <td class="trend-up">>10 sec</td>
+                        <td>~50-100 μs</td>
+                        <td>~100 μs</td>
+                    </tr>
+                    <tr>
+                        <td>Quantum Volume</td>
+                        <td>2^25</td>
+                        <td>2^20</td>
+                        <td>N/A</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Cash Runway Analysis -->
+        <div class="card">
+            <h2 class="card-title">💵 Cash Runway & Burn Rate</h2>
+            <div class="chart-container">
+                <canvas id="cashRunwayChart"></canvas>
+            </div>
+            <table class="metrics-table">
+                <thead>
+                    <tr>
+                        <th>Company</th>
+                        <th>Cash Position</th>
+                        <th>Runway</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>IonQ</td>
+                        <td>$380M</td>
+                        <td>17 months</td>
+                        <td><span class="risk-indicator risk-moderate">🟡 Moderate</span></td>
+                    </tr>
+                    <tr>
+                        <td>Rigetti</td>
+                        <td>$72M</td>
+                        <td>4 months</td>
+                        <td><span class="risk-indicator risk-high">🔴 Critical</span></td>
+                    </tr>
+                    <tr>
+                        <td>D-Wave</td>
+                        <td>$48M</td>
+                        <td>4 months</td>
+                        <td><span class="risk-indicator risk-high">🔴 Critical</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Active Alerts -->
+        <div class="card">
+            <h2 class="card-title">🚨 Active Alerts Feed</h2>
+            <div class="alerts-container">
+                <div class="alert-item alert-critical">
+                    <div class="alert-date">2024-11-15 14:32 UTC</div>
+                    <span class="alert-icon">🚨</span>
+                    <strong>CRITICAL:</strong> Rigetti cash runway fell to 4 months - immediate financing required
+                </div>
+                <div class="alert-item alert-critical">
+                    <div class="alert-date">2024-11-15 09:18 UTC</div>
+                    <span class="alert-icon">🚨</span>
+                    <strong>CRITICAL:</strong> D-Wave revenue declined -15% YoY - commercialization challenges persist
+                </div>
+                <div class="alert-item alert-warning">
+                    <div class="alert-date">2024-11-14 16:45 UTC</div>
+                    <span class="alert-icon">⚠️</span>
+                    <strong>WARNING:</strong> IonQ customer concentration at 61% (top 3 customers) - diversification needed
+                </div>
+                <div class="alert-item alert-warning">
+                    <div class="alert-date">2024-11-13 11:22 UTC</div>
+                    <span class="alert-icon">⚠️</span>
+                    <strong>WARNING:</strong> Rigetti stock down -45% QoQ - market confidence deteriorating
+                </div>
+                <div class="alert-item alert-positive">
+                    <div class="alert-date">2024-11-16 08:00 UTC</div>
+                    <span class="alert-icon">✅</span>
+                    <strong>POSITIVE:</strong> IonQ awarded $54.5M AFRL contract - 50% of annual revenue secured
+                </div>
+                <div class="alert-item alert-positive">
+                    <div class="alert-date">2024-11-13 13:45 UTC</div>
+                    <span class="alert-icon">✅</span>
+                    <strong>POSITIVE:</strong> D-Wave Advantage2 performance improved 75% - noise reduction validated
+                </div>
+                <div class="alert-item alert-positive">
+                    <div class="alert-date">2024-11-12 10:15 UTC</div>
+                    <span class="alert-icon">✅</span>
+                    <strong>POSITIVE:</strong> IonQ gate fidelity maintains 99.99% world record - technology leadership sustained
+                </div>
+                <div class="alert-item alert-warning">
+                    <div class="alert-date">2024-11-11 15:30 UTC</div>
+                    <span class="alert-icon">⚠️</span>
+                    <strong>WARNING:</strong> IBM announces 133-qubit Heron processor - competitive pressure increasing
+                </div>
+            </div>
+        </div>
+
+        <!-- Stock Performance -->
+        <div class="card">
+            <h2 class="card-title">📈 Stock Performance (Q4 2024)</h2>
+            <div class="chart-container">
+                <canvas id="stockChart"></canvas>
+            </div>
+            <div class="kpi-grid">
+                <div class="kpi-item">
+                    <div class="kpi-label">IonQ (IONQ)</div>
+                    <div class="kpi-value">$8.32</div>
+                    <div class="kpi-change trend-down">↘ -12% QoQ</div>
+                </div>
+                <div class="kpi-item">
+                    <div class="kpi-label">Rigetti (RGTI)</div>
+                    <div class="kpi-value">$0.68</div>
+                    <div class="kpi-change trend-down">↘ -45% QoQ</div>
+                </div>
+                <div class="kpi-item">
+                    <div class="kpi-label">D-Wave (QBTS)</div>
+                    <div class="kpi-value">$0.82</div>
+                    <div class="kpi-change trend-down">↘ -38% QoQ</div>
+                </div>
+                <div class="kpi-item">
+                    <div class="kpi-label">NASDAQ</div>
+                    <div class="kpi-value">16,825</div>
+                    <div class="kpi-change trend-up">↗ +8% QoQ</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Competitive Comparison Heatmap -->
+        <div class="card" style="grid-column: 1 / -1;">
+            <h2 class="card-title">🎯 Competitive Comparison Matrix</h2>
+            <div class="comparison-heatmap">
+                <div class="heatmap-cell heatmap-header"></div>
+                <div class="heatmap-cell heatmap-header">IonQ</div>
+                <div class="heatmap-cell heatmap-header">Rigetti</div>
+                <div class="heatmap-cell heatmap-header">D-Wave</div>
+
+                <div class="heatmap-cell heatmap-label">Technology Maturity</div>
+                <div class="heatmap-cell heatmap-value score-high">8.2/10</div>
+                <div class="heatmap-cell heatmap-value score-medium">6.5/10</div>
+                <div class="heatmap-cell heatmap-value score-medium">7.5/10</div>
+
+                <div class="heatmap-cell heatmap-label">Financial Strength</div>
+                <div class="heatmap-cell heatmap-value score-high">9.1/10</div>
+                <div class="heatmap-cell heatmap-value score-medium">5.8/10</div>
+                <div class="heatmap-cell heatmap-value score-medium">6.8/10</div>
+
+                <div class="heatmap-cell heatmap-label">Commercialization</div>
+                <div class="heatmap-cell heatmap-value score-medium">7.5/10</div>
+                <div class="heatmap-cell heatmap-value score-low">4.2/10</div>
+                <div class="heatmap-cell heatmap-value score-medium">6.1/10</div>
+
+                <div class="heatmap-cell heatmap-label">Competitive Position</div>
+                <div class="heatmap-cell heatmap-value score-medium">7.2/10</div>
+                <div class="heatmap-cell heatmap-value score-low">5.3/10</div>
+                <div class="heatmap-cell heatmap-value score-medium">6.4/10</div>
+
+                <div class="heatmap-cell heatmap-label">Hardware Engineering</div>
+                <div class="heatmap-cell heatmap-value score-high">8.5/10</div>
+                <div class="heatmap-cell heatmap-value score-medium">6.0/10</div>
+                <div class="heatmap-cell heatmap-value score-medium">7.8/10</div>
+
+                <div class="heatmap-cell heatmap-label">Patent Portfolio</div>
+                <div class="heatmap-cell heatmap-value score-medium">7.2/10</div>
+                <div class="heatmap-cell heatmap-value score-medium">6.8/10</div>
+                <div class="heatmap-cell heatmap-value score-high">8.1/10</div>
+
+                <div class="heatmap-cell heatmap-label" style="background: rgba(102, 126, 234, 0.4); font-weight: bold;">OVERALL SCORE</div>
+                <div class="heatmap-cell heatmap-value score-high" style="font-size: 1.2em; font-weight: bold;">8.0/10</div>
+                <div class="heatmap-cell heatmap-value score-low" style="font-size: 1.2em; font-weight: bold;">5.1/10</div>
+                <div class="heatmap-cell heatmap-value score-medium" style="font-size: 1.2em; font-weight: bold;">6.8/10</div>
+            </div>
+        </div>
+
+        <!-- Partnership & Customer Metrics -->
+        <div class="card">
+            <h2 class="card-title">🤝 Partnerships & Customers</h2>
+            <table class="metrics-table">
+                <thead>
+                    <tr>
+                        <th>Company</th>
+                        <th>Active Customers</th>
+                        <th>Major Partners</th>
+                        <th>Top Contract</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>IonQ</td>
+                        <td>23</td>
+                        <td>AWS, Azure, GCP, AFRL</td>
+                        <td>$54.5M (AFRL)</td>
+                    </tr>
+                    <tr>
+                        <td>Rigetti</td>
+                        <td>14</td>
+                        <td>AWS, DARPA</td>
+                        <td>$8.6M (DARPA)</td>
+                    </tr>
+                    <tr>
+                        <td>D-Wave</td>
+                        <td>34</td>
+                        <td>AWS, GCP, LANL</td>
+                        <td>$4.2M (LANL)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Quarterly Milestones -->
+        <div class="card">
+            <h2 class="card-title">🎯 Upcoming Milestones (Q1 2025)</h2>
+            <div style="line-height: 2;">
+                <div><strong>IonQ:</strong> Forte Enterprise deployment (Q1), #AQ 64 target (Q4)</div>
+                <div><strong>Rigetti:</strong> Ankaa-3 launch (Q2), 100-qubit chip (Q3)</div>
+                <div><strong>D-Wave:</strong> Advantage2 commercialization (Q1), Gate-model prototype (Q4)</div>
+                <div style="margin-top: 15px; padding: 15px; background: rgba(237, 137, 54, 0.2); border-left: 4px solid #ed8936; border-radius: 5px;">
+                    <strong>⚠️ Critical Watch:</strong> Both Rigetti and D-Wave require financing announcements by Q1 2025 to avoid severe cash constraints
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="refresh-button" onclick="refreshDashboard()">
+        🔄 Refresh Data
+    </button>
+
+    <script>
+        // Update timestamp
+        function updateTimestamp() {
+            const now = new Date();
+            document.getElementById('updateTime').textContent = now.toLocaleString();
+        }
+        updateTimestamp();
+
+        // Create health gauge charts
+        function createGauge(canvasId, value, maxValue = 100) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            const percentage = (value / maxValue) * 100;
+
+            let color;
+            if (percentage >= 75) color = 'rgb(72, 187, 120)';
+            else if (percentage >= 50) color = 'rgb(237, 137, 54)';
+            else color = 'rgb(245, 101, 101)';
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [value, maxValue - value],
+                        backgroundColor: [color, 'rgba(255, 255, 255, 0.1)'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    cutout: '75%',
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    }
+                }
+            });
+        }
+
+        createGauge('gaugeIonq', 82);
+        createGauge('gaugeRigetti', 53);
+        createGauge('gaugeDwave', 68);
+
+        // Revenue Growth Chart
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        new Chart(revenueCtx, {
+            type: 'line',
+            data: {
+                labels: ['Q1 2024', 'Q2 2024', 'Q3 2024', 'Q4 2024'],
+                datasets: [
+                    {
+                        label: 'IonQ',
+                        data: [6.1, 7.6, 12.4, 15.8],
+                        borderColor: 'rgb(72, 187, 120)',
+                        backgroundColor: 'rgba(72, 187, 120, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Rigetti',
+                        data: [1.4, 1.8, 2.3, 2.9],
+                        borderColor: 'rgb(237, 137, 54)',
+                        backgroundColor: 'rgba(237, 137, 54, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'D-Wave',
+                        data: [2.5, 2.1, 1.9, 1.6],
+                        borderColor: 'rgb(245, 101, 101)',
+                        backgroundColor: 'rgba(245, 101, 101, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { color: '#e0e6ed' }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Quarterly Revenue ($M)',
+                        color: '#667eea'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: '#a0aec0' },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    },
+                    x: {
+                        ticks: { color: '#a0aec0' },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    }
+                }
+            }
+        });
+
+        // Cash Runway Chart
+        const cashCtx = document.getElementById('cashRunwayChart').getContext('2d');
+        new Chart(cashCtx, {
+            type: 'bar',
+            data: {
+                labels: ['IonQ', 'Rigetti', 'D-Wave'],
+                datasets: [{
+                    label: 'Cash Runway (Months)',
+                    data: [17, 4, 4],
+                    backgroundColor: [
+                        'rgba(237, 137, 54, 0.7)',
+                        'rgba(245, 101, 101, 0.7)',
+                        'rgba(245, 101, 101, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgb(237, 137, 54)',
+                        'rgb(245, 101, 101)',
+                        'rgb(245, 101, 101)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { color: '#e0e6ed' }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Cash Runway Comparison',
+                        color: '#667eea'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: '#a0aec0' },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    },
+                    x: {
+                        ticks: { color: '#a0aec0' },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    }
+                }
+            }
+        });
+
+        // Stock Performance Chart
+        const stockCtx = document.getElementById('stockChart').getContext('2d');
+        new Chart(stockCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [
+                    {
+                        label: 'IonQ',
+                        data: [9.8, 10.2, 9.5, 8.9, 8.3, 8.3],
+                        borderColor: 'rgb(72, 187, 120)',
+                        backgroundColor: 'rgba(72, 187, 120, 0.1)',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Rigetti',
+                        data: [1.5, 1.3, 1.2, 0.9, 0.7, 0.68],
+                        borderColor: 'rgb(237, 137, 54)',
+                        backgroundColor: 'rgba(237, 137, 54, 0.1)',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'D-Wave',
+                        data: [1.4, 1.3, 1.1, 0.95, 0.85, 0.82],
+                        borderColor: 'rgb(245, 101, 101)',
+                        backgroundColor: 'rgba(245, 101, 101, 0.1)',
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { color: '#e0e6ed' }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Stock Price Trends (USD)',
+                        color: '#667eea'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        ticks: { color: '#a0aec0' },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    },
+                    x: {
+                        ticks: { color: '#a0aec0' },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    }
+                }
+            }
+        });
+
+        // Tab filtering
+        function showAllCompanies() {
+            document.querySelectorAll('.card').forEach(card => card.style.display = 'block');
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function filterCompany(company) {
+            // This would require more complex filtering logic in a real implementation
+            alert(`Filtering for ${company.toUpperCase()} - Feature in development`);
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        // Refresh dashboard
+        function refreshDashboard() {
+            const button = document.querySelector('.refresh-button');
+            button.classList.add('loading');
+            button.textContent = '🔄 Refreshing...';
+
+            setTimeout(() => {
+                updateTimestamp();
+                button.classList.remove('loading');
+                button.textContent = '🔄 Refresh Data';
+
+                // Show success message
+                const alertsContainer = document.querySelector('.alerts-container');
+                const newAlert = document.createElement('div');
+                newAlert.className = 'alert-item alert-positive';
+                newAlert.innerHTML = `
+                    <div class="alert-date">${new Date().toLocaleString()}</div>
+                    <span class="alert-icon">✅</span>
+                    <strong>SYSTEM:</strong> Dashboard data refreshed successfully
+                `;
+                alertsContainer.insertBefore(newAlert, alertsContainer.firstChild);
+            }, 1500);
+        }
+
+        // Auto-refresh every 15 minutes
+        setInterval(refreshDashboard, 15 * 60 * 1000);
+    </script>
+</body>
+</html>
